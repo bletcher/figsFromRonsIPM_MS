@@ -91,7 +91,9 @@ f6CR <- bind_rows(f6CRa,f6CRb) %>%
 
 
 #put traits together
-f46 <- bind_rows(f4,f6)
+f46 <- bind_rows(f4,f6) %>%
+       mutate( effect = factor(effect,levels=c('Total','Density','Climate'), ordered=T)) 
+
 f46CR <- bind_rows(f4CR,f6CR)
 
 ```
@@ -142,6 +144,83 @@ ggsave( file=paste0(getwd(),'/lengthWB.png'), plot=lengthWB, dpi=600 , width=6,h
 
 ```
 
+```{r mean sensitivity barplots}
+
+# pop size average for climate and density
+sensBarWBN <- 
+
+f46 %>%
+  filter(River=="Westbrook" & trait=='N') %>%
+  group_by(trait,effect) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(effect,mean,fill=effect)) +
+    geom_bar(stat='identity') +
+    theme_bw(base_size=25) +
+    theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium population size') +
+    geom_hline(yintercept=0, color='darkgrey') 
+
+  ggsave( file=paste0(getwd(),'/sensBarWBN.png'), plot=sensBarWBN, dpi=600, width=6,height=5,units='in', scale=2 )
+
+# pop size by season
+sensBarSeasonWBN <- 
+
+f46CR %>%
+  filter(River=="Westbrook" & trait=='N') %>%
+  group_by(trait,type,Env) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(type,mean,fill=type)) +
+    geom_bar(stat='identity') +
+    theme_bw(base_size=25) +
+    theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium population size') +
+    geom_vline(xintercept=1.513) +
+    geom_hline(yintercept=0, color='darkgrey') +
+    facet_wrap(~Env)
+
+  ggsave( file=paste0(getwd(),'/sensBarSeasonWBN.png'), plot=sensBarSeasonWBN, dpi=600, width=6,height=5,units='in', scale=2 )
+
+###############################################
+# body size average for climate and density
+sensBarWBSize <- 
+
+f46 %>%
+  filter(River=="Westbrook" & trait=='length') %>%
+  group_by(trait,effect) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(effect,mean,fill=effect)) +
+    geom_bar(stat='identity') +
+    theme_bw(base_size=25) +
+    theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium body size') +
+    geom_hline(yintercept=0, color='darkgrey')
+
+  ggsave( file=paste0(getwd(),'/sensBarWBSize.png'), plot=sensBarWBSize, dpi=600, width=6,height=5,units='in', scale=2 )
+
+# body size by season
+sensBarSeasonWBSize <- 
+
+f46CR %>%
+  filter(River=="Westbrook" & trait=='Size') %>%
+  group_by(trait,type,Env) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(type,mean,fill=type)) +
+    geom_bar(stat='identity') +
+    theme_bw(base_size=25) +
+    theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium body size') +
+    geom_vline(xintercept=1.513) +
+    geom_hline(yintercept=0, color='darkgrey') +
+    facet_wrap(~Env)
+
+  ggsave( file=paste0(getwd(),'/sensBarSeasonWBSize.png'), plot=sensBarSeasonWBSize, dpi=600, width=6,height=5,units='in', scale=2 )
+
+```
+
 ```{r climate and density sensitivity graphs}
 ###################
 # Sensitivities
@@ -149,6 +228,9 @@ ggsave( file=paste0(getwd(),'/lengthWB.png'), plot=lengthWB, dpi=600 , width=6,h
 # PopSize
 
 ggSens <- function(d,riv,t){
+  
+  label <- 'population'; if(t=='Size') label <- 'body' 
+  
   gg <- 
   filter(d, River==riv & trait == t ) %>%
   ggplot( aes( year,dNdt,linetype=effect,color=effect ) ) +
@@ -159,7 +241,7 @@ ggSens <- function(d,riv,t){
           legend.title=element_blank(),
           legend.text = element_text(size = 35)) +
     scale_x_continuous('Year',limits=c(2003,2012), breaks=c(seq(2002,2012,2))) +
-    scale_y_continuous('Sensitivity of equilibrium population size') +
+    scale_y_continuous(paste0('Sensitivity of equilibrium ',label,' size')) +
     scale_linetype_manual(values=c(3,2,1)) +
     scale_color_hue(l=40) +
     geom_hline(yintercept=0)
@@ -181,7 +263,9 @@ sensPopSizeF_WB <-
 
   
 ggSensFT <- function(d,riv,t,e){ 
-  
+ 
+label <- 'population'; if(t=='Size') label <- 'body'  
+
 gg <-     
 filter(d, River==riv & trait==t, Env == e ) %>%
 ggplot( aes( year,dNdt,linetype=type,color=type ) ) +
@@ -192,7 +276,7 @@ ggplot( aes( year,dNdt,linetype=type,color=type ) ) +
         legend.title=element_blank(),
         legend.text = element_text(size = 35)) +
   scale_x_continuous('Year',limits=c(2003,2012), breaks=c(seq(2002,2012,2))) +
-  scale_y_continuous('Sensitivity of equilibrium population size') +
+  scale_y_continuous(paste0('Sensitivity of equilibrium ',label,' size')) +
   scale_linetype_manual(values=c(1,2,3,4,5)) +
  # scale_colour_manual(values=cbbPalette)+#c("red","blue",'black')) +
   scale_color_hue(l=40) +
