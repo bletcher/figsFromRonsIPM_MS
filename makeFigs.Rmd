@@ -163,6 +163,20 @@ f46 %>%
 
   ggsave( file=paste0(getwd(),'/sensBarWBN.png'), plot=sensBarWBN, dpi=600, width=6,height=5,units='in', scale=2 )
 
+### all rivers
+f46 %>%
+  filter(trait=='N') %>%
+  group_by(River,trait,effect) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(effect,mean,fill=River)) +
+    geom_bar(position=position_dodge(),stat='identity') +
+    theme_bw(base_size=25) +
+  #  theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium population size') +
+    geom_hline(yintercept=0, color='darkgrey') 
+
+##########################
 # pop size by season
 sensBarSeasonWBN <- 
 
@@ -199,6 +213,20 @@ f46 %>%
     geom_hline(yintercept=0, color='darkgrey')
 
   ggsave( file=paste0(getwd(),'/sensBarWBSize.png'), plot=sensBarWBSize, dpi=600, width=6,height=5,units='in', scale=2 )
+
+### all rivers
+f46 %>%
+  filter(trait=='length') %>%
+  group_by(River,trait,effect) %>%
+  summarise( mean=mean(dNdt) ) %>%
+  ggplot(aes(effect,mean,fill=River)) +
+    geom_bar(position=position_dodge(),stat='identity') +
+    theme_bw(base_size=25) +
+  #  theme(legend.position='none') +
+    scale_x_discrete('Pathway') +
+    scale_y_continuous('Sensitivity of equilibrium body size') +
+    geom_hline(yintercept=0, color='darkgrey') 
+
 
 # body size by season
 sensBarSeasonWBSize <- 
@@ -293,3 +321,58 @@ gLF <- ggSensFT(f46CR,'Westbrook','Size','Flow')
 gLT <- ggSensFT(f46CR,'Westbrook','Size','Temp')
 
 ```
+
+
+```{r env data}
+load('D:/PITTAGMAIN/CMR Analyses/Hierach_Bugs/allSpp/dMDataOutBKT2002_2012.RData')
+dMData$riverOrdered <- factor(dMData$river,levels=c('WEST BROOK','WB JIMMY','WB MITCHELL','WB OBEAR'), ordered=T)
+
+m <- dMData %>%
+       group_by(riverOrdered,riverN,season,year) %>%
+       summarise(Temperature = mean(fullMeanT, na.rm=TRUE),
+                 Flow = mean(fullMeanD, na.rm=TRUE),
+                 n=n()) 
+
+rm(dMData)
+
+seasonLabeller <- function(var, value){
+  value <- as.character(value)
+  if (var=="season") { 
+    value[value=="1"] <- "Spring"
+    value[value=="2"] <- "Summer"
+    value[value=="3"] <- "Autumn"
+    value[value=="4"] <- "Winter"
+  }
+  return(value)
+}
+m$seasonText <- seasonLabeller('season',m$season)
+m$seasonText <- factor(m$seasonText,levels=c("Autumn","Winter","Spring","Summer"), ordered=T)
+
+mL <- gather(m,flowTemp,var,Temperature:Flow)
+
+fT <- 
+
+ggplot(filter(mL,riverOrdered == 'WEST BROOK'), aes(year,var)) +
+  geom_point(size=4) +
+  geom_smooth(color='black',method=lm, se=F) +
+  theme_bw(base_size=25) +
+  scale_x_continuous('Year',limits=c(2003,2012), breaks=c(seq(2002,2012,2))) +
+  scale_y_continuous('') +
+  facet_grid(flowTemp~seasonText,scales='free')
+
+  ggsave( file=paste0(getwd(),'/flowTemperatureMeans.png'), plot=fT, dpi=600, width=10,height=5,units='in', scale=2 )
+
+# all rivers
+fTAll <- 
+
+ggplot(filter(mL), aes(year,var,color=riverOrdered)) +
+  geom_point(size=4) +
+  geom_smooth(method=lm, se=F) +
+  theme_bw(base_size=25) +
+  scale_x_continuous('Year',limits=c(2003,2012), breaks=c(seq(2002,2012,2))) +
+  scale_y_continuous('') +
+  facet_grid(flowTemp~seasonText,scales='free')
+
+  ggsave( file=paste0(getwd(),'/flowTemperatureMeansAll.png'), plot=fTAll, dpi=600, width=10,height=5,units='in', scale=2 )
+```
+
